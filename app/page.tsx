@@ -16,6 +16,7 @@ import AIRecommendations from '@/components/AIRecommendations';
 import PrepaidAlert from '@/components/PrepaidAlert';
 import SavingsSimulator from '@/components/SavingsSimulator';
 import AIConfidence from '@/components/AIConfidence';
+import ImageUpload from '@/components/ImageUpload';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -154,6 +155,18 @@ export default function Home() {
           {/* AI Confidence Indicators */}
           <section id="confidence">
             <AIConfidence {...confidenceMetrics} />
+          </section>
+
+          {/* AI Vision - Image Analysis */}
+          <section id="vision" className="mt-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">AI Vision Analysis</h2>
+              <p className="text-gray-600">Upload images for real-time AI analysis powered by DeepSeek Vision</p>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <ImageUpload type="meter" />
+              <ImageUpload type="solar" />
+            </div>
           </section>
         </div>
 
