@@ -114,7 +114,7 @@ export default function Home() {
               Our AI continuously monitors your household energy patterns, predicts future usage, 
               and provides intelligent recommendations to maximize solar efficiency while preventing 
               unexpected electricity outages.
-            </p>
+          </p>
           </div>
         </div>
 

@@ -343,3 +343,4 @@ The application is ready to:
 
 🌍 **EcoSync** - Demonstrating the future of sustainable AI technology ⚡🤖
 
+

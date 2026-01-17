@@ -168,3 +168,4 @@ export default function AIInsightPanel({ analysis, isAnalyzing = false }: AIInsi
   );
 }
 
+
