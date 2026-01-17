@@ -150,7 +150,7 @@ Prioritize:
 }
 
 /**
- * Analyze meter image using DeepSeek Vision
+ * Analyze meter image using OpenAI Vision
  */
 export async function analyzeMeterImage(imageBase64: string): Promise<{
   reading: number;
@@ -158,17 +158,20 @@ export async function analyzeMeterImage(imageBase64: string): Promise<{
   confidence: number;
   analysis: string;
 }> {
-  if (!isDeepSeekConfigured()) {
-    throw new Error('DeepSeek API key not configured');
+  // Use OpenAI Vision for image analysis
+  const { openai, isOpenAIConfigured, VISION_MODEL } = await import('./openai-client');
+  
+  if (!isOpenAIConfigured()) {
+    throw new Error('OpenAI API key not configured. Please add OPENAI_API_KEY to your .env.local file');
   }
 
   try {
-    const response = await deepseek.chat.completions.create({
-      model: MODELS.VISION,
+    const response = await openai.chat.completions.create({
+      model: VISION_MODEL,
       messages: [
         {
           role: 'system',
-          content: 'You are an expert at reading energy meters and solar panel displays. Extract numerical readings accurately.',
+          content: 'You are an expert at reading energy meters and solar panel displays. Extract numerical readings accurately from images. Always respond in valid JSON format.',
         },
         {
           role: 'user',
@@ -193,18 +196,30 @@ export async function analyzeMeterImage(imageBase64: string): Promise<{
 
     const content = response.choices[0]?.message?.content;
     if (!content) {
-      throw new Error('No response from DeepSeek Vision');
+      throw new Error('No response from OpenAI Vision');
     }
 
     return JSON.parse(content);
-  } catch (error) {
-    console.error('DeepSeek Vision Error:', error);
-    throw new Error('Failed to analyze meter image');
+  } catch (error: any) {
+    console.error('OpenAI Vision Error:', error);
+    
+    // Provide more helpful error messages
+    if (error?.status === 401) {
+      throw new Error('OpenAI API key is invalid. Please check your API key at https://platform.openai.com');
+    }
+    if (error?.status === 402 || error?.code === 'insufficient_quota') {
+      throw new Error('OpenAI account has insufficient balance. Please add credits at https://platform.openai.com');
+    }
+    if (error?.code === 'invalid_request_error') {
+      throw new Error(`OpenAI API error: ${error.message || 'Invalid request'}`);
+    }
+    
+    throw new Error(`Failed to analyze meter image: ${error?.message || 'Unknown error'}`);
   }
 }
 
 /**
- * Analyze solar panel image for efficiency/issues
+ * Analyze solar panel image for efficiency/issues using OpenAI Vision
  */
 export async function analyzeSolarPanelImage(imageBase64: string): Promise<{
   condition: 'excellent' | 'good' | 'fair' | 'poor';
@@ -212,17 +227,20 @@ export async function analyzeSolarPanelImage(imageBase64: string): Promise<{
   recommendations: string[];
   estimatedEfficiency: number;
 }> {
-  if (!isDeepSeekConfigured()) {
-    throw new Error('DeepSeek API key not configured');
+  // Use OpenAI Vision for image analysis
+  const { openai, isOpenAIConfigured, VISION_MODEL } = await import('./openai-client');
+  
+  if (!isOpenAIConfigured()) {
+    throw new Error('OpenAI API key not configured. Please add OPENAI_API_KEY to your .env.local file');
   }
 
   try {
-    const response = await deepseek.chat.completions.create({
-      model: MODELS.VISION,
+    const response = await openai.chat.completions.create({
+      model: VISION_MODEL,
       messages: [
         {
           role: 'system',
-          content: 'You are a solar panel inspection expert. Analyze panel condition, identify issues, and provide recommendations.',
+          content: 'You are a solar panel inspection expert. Analyze panel condition, identify issues, and provide recommendations. Always respond in valid JSON format.',
         },
         {
           role: 'user',
@@ -247,13 +265,25 @@ export async function analyzeSolarPanelImage(imageBase64: string): Promise<{
 
     const content = response.choices[0]?.message?.content;
     if (!content) {
-      throw new Error('No response from DeepSeek Vision');
+      throw new Error('No response from OpenAI Vision');
     }
 
     return JSON.parse(content);
-  } catch (error) {
-    console.error('DeepSeek Vision Error:', error);
-    throw new Error('Failed to analyze solar panel image');
+  } catch (error: any) {
+    console.error('OpenAI Vision Error:', error);
+    
+    // Provide more helpful error messages
+    if (error?.status === 401) {
+      throw new Error('OpenAI API key is invalid. Please check your API key at https://platform.openai.com');
+    }
+    if (error?.status === 402 || error?.code === 'insufficient_quota') {
+      throw new Error('OpenAI account has insufficient balance. Please add credits at https://platform.openai.com');
+    }
+    if (error?.code === 'invalid_request_error') {
+      throw new Error(`OpenAI API error: ${error.message || 'Invalid request'}`);
+    }
+    
+    throw new Error(`Failed to analyze solar panel image: ${error?.message || 'Unknown error'}`);
   }
 }
 

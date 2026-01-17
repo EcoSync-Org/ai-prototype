@@ -105,7 +105,7 @@ export default function ImageUpload({ type, onAnalysisComplete }: ImageUploadPro
               <p className="text-sm text-gray-600">{description}</p>
             </div>
           </div>
-          <Badge variant="info">AI Vision</Badge>
+          <Badge variant="info">OpenAI Vision</Badge>
         </div>
       </CardHeader>
 
@@ -149,21 +149,51 @@ export default function ImageUpload({ type, onAnalysisComplete }: ImageUploadPro
         {analyzing && (
           <div className="bg-blue-50 rounded-xl p-6 border border-blue-200 mb-6">
             <div className="flex items-center justify-center gap-4">
-              <AIThinkingIndicator size="lg" label="DeepSeek AI analyzing image..." />
+              <AIThinkingIndicator size="lg" label="OpenAI Vision analyzing image..." />
             </div>
           </div>
         )}
 
         {/* Error Display */}
         {error && (
-          <div className="bg-red-50 rounded-xl p-4 border border-red-200 mb-6">
+          <div className={`rounded-xl p-4 border mb-6 ${
+            error.includes('does not support image analysis') 
+              ? 'bg-amber-50 border-amber-200' 
+              : 'bg-red-50 border-red-200'
+          }`}>
             <div className="flex items-start gap-3">
-              <svg className="w-5 h-5 text-red-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              <svg className={`w-5 h-5 mt-0.5 ${
+                error.includes('does not support image analysis') 
+                  ? 'text-amber-600' 
+                  : 'text-red-600'
+              }`} fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
-              <div>
-                <p className="text-sm font-semibold text-red-900">Analysis Error</p>
-                <p className="text-sm text-red-700 mt-1">{error}</p>
+              <div className="flex-1">
+                <p className={`text-sm font-semibold ${
+                  error.includes('does not support image analysis') 
+                    ? 'text-amber-900' 
+                    : 'text-red-900'
+                }`}>
+                  {error.includes('does not support image analysis') ? 'Limitation Notice' : 'Analysis Error'}
+                </p>
+                <p className={`text-sm mt-1 ${
+                  error.includes('does not support image analysis') 
+                    ? 'text-amber-700' 
+                    : 'text-red-700'
+                }`}>
+                  {error}
+                </p>
+                {error.includes('does not support image analysis') && (
+                  <div className="mt-3 p-3 bg-white rounded-lg border border-amber-200">
+                    <p className="text-xs font-semibold text-gray-900 mb-2">Alternative Options:</p>
+                    <ul className="text-xs text-gray-700 space-y-1">
+                      <li>• Use OpenAI Vision API (supports image analysis)</li>
+                      <li>• Manually describe what you see in the image</li>
+                      <li>• Use DeepSeek for text-based energy analysis instead</li>
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           </div>
