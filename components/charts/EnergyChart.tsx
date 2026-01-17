@@ -204,3 +204,4 @@ export default function EnergyChart({ data, height = 300 }: EnergyChartProps) {
 }
 
 
+

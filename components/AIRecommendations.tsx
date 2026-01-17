@@ -152,3 +152,4 @@ export default function AIRecommendations({ recommendations, isGenerating = fals
 }
 
 
+
