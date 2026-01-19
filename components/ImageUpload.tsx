@@ -105,7 +105,7 @@ export default function ImageUpload({ type, onAnalysisComplete }: ImageUploadPro
               <p className="text-sm text-gray-600">{description}</p>
             </div>
           </div>
-          <Badge variant="info">OpenAI Vision</Badge>
+          <Badge variant="info">Gemini Vision (FREE)</Badge>
         </div>
       </CardHeader>
 
@@ -149,7 +149,7 @@ export default function ImageUpload({ type, onAnalysisComplete }: ImageUploadPro
         {analyzing && (
           <div className="bg-blue-50 rounded-xl p-6 border border-blue-200 mb-6">
             <div className="flex items-center justify-center gap-4">
-              <AIThinkingIndicator size="lg" label="OpenAI Vision analyzing image..." />
+              <AIThinkingIndicator size="lg" label="Gemini AI analyzing image..." />
             </div>
           </div>
         )}
