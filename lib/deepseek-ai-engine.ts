@@ -150,7 +150,7 @@ Prioritize:
 }
 
 /**
- * Analyze meter image using OpenAI Vision
+ * Analyze meter image using Google Gemini Vision (FREE)
  */
 export async function analyzeMeterImage(imageBase64: string): Promise<{
   reading: number;
@@ -158,60 +158,55 @@ export async function analyzeMeterImage(imageBase64: string): Promise<{
   confidence: number;
   analysis: string;
 }> {
-  // Use OpenAI Vision for image analysis
-  const { openai, isOpenAIConfigured, VISION_MODEL } = await import('./openai-client');
+  // Use Google Gemini for FREE image analysis
+  const { gemini, isGeminiConfigured, VISION_MODEL } = await import('./gemini-client');
   
-  if (!isOpenAIConfigured()) {
-    throw new Error('OpenAI API key not configured. Please add OPENAI_API_KEY to your .env.local file');
+  if (!isGeminiConfigured() || !gemini) {
+    throw new Error('Gemini API key not configured. Please add GEMINI_API_KEY to your .env.local file. Get a FREE key at https://aistudio.google.com/app/apikey');
   }
 
   try {
-    const response = await openai.chat.completions.create({
-      model: VISION_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert at reading energy meters and solar panel displays. Extract numerical readings accurately from images. Always respond in valid JSON format.',
-        },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Analyze this energy meter or solar display image. Extract the reading, unit, and provide analysis. Respond in JSON format: {"reading": number, "unit": "kWh|kW|RWF", "confidence": 0-100, "analysis": "detailed description"}',
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/jpeg;base64,${imageBase64}`,
-              },
-            },
-          ],
-        },
-      ],
-      temperature: 0.3,
-      max_tokens: 500,
-      response_format: { type: 'json_object' },
-    });
+    const model = gemini.getGenerativeModel({ model: VISION_MODEL });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('No response from OpenAI Vision');
+    // Convert base64 to format Gemini expects
+    const imagePart = {
+      inlineData: {
+        data: imageBase64,
+        mimeType: 'image/jpeg',
+      },
+    };
+
+    const prompt = `You are an expert at reading energy meters and solar panel displays. Analyze this image and extract the numerical reading, unit, and provide detailed analysis.
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "reading": <number>,
+  "unit": "kWh|kW|RWF|kVA",
+  "confidence": <0-100>,
+  "analysis": "<detailed description of what you see>"
+}`;
+
+    const result = await model.generateContent([prompt, imagePart]);
+    const response = await result.response;
+    const text = response.text();
+
+    // Extract JSON from response (Gemini might add extra text)
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('No JSON found in response');
     }
 
-    return JSON.parse(content);
+    const parsed = JSON.parse(jsonMatch[0]);
+    return parsed;
   } catch (error: any) {
-    console.error('OpenAI Vision Error:', error);
+    console.error('Gemini Vision Error:', error);
     
     // Provide more helpful error messages
-    if (error?.status === 401) {
-      throw new Error('OpenAI API key is invalid. Please check your API key at https://platform.openai.com');
+    if (error?.message?.includes('API_KEY_INVALID') || error?.status === 401) {
+      throw new Error('Gemini API key is invalid. Please check your API key at https://aistudio.google.com/app/apikey');
     }
-    if (error?.status === 402 || error?.code === 'insufficient_quota') {
-      throw new Error('OpenAI account has insufficient balance. Please add credits at https://platform.openai.com');
-    }
-    if (error?.code === 'invalid_request_error') {
-      throw new Error(`OpenAI API error: ${error.message || 'Invalid request'}`);
+    if (error?.message?.includes('quota') || error?.status === 429) {
+      throw new Error('Gemini API quota exceeded. The free tier has limits. Please try again later or check your quota at https://aistudio.google.com');
     }
     
     throw new Error(`Failed to analyze meter image: ${error?.message || 'Unknown error'}`);
@@ -219,7 +214,7 @@ export async function analyzeMeterImage(imageBase64: string): Promise<{
 }
 
 /**
- * Analyze solar panel image for efficiency/issues using OpenAI Vision
+ * Analyze solar panel image for efficiency/issues using Google Gemini Vision (FREE)
  */
 export async function analyzeSolarPanelImage(imageBase64: string): Promise<{
   condition: 'excellent' | 'good' | 'fair' | 'poor';
@@ -227,60 +222,62 @@ export async function analyzeSolarPanelImage(imageBase64: string): Promise<{
   recommendations: string[];
   estimatedEfficiency: number;
 }> {
-  // Use OpenAI Vision for image analysis
-  const { openai, isOpenAIConfigured, VISION_MODEL } = await import('./openai-client');
+  // Use Google Gemini for FREE image analysis
+  const { gemini, isGeminiConfigured, VISION_MODEL } = await import('./gemini-client');
   
-  if (!isOpenAIConfigured()) {
-    throw new Error('OpenAI API key not configured. Please add OPENAI_API_KEY to your .env.local file');
+  if (!isGeminiConfigured() || !gemini) {
+    throw new Error('Gemini API key not configured. Please add GEMINI_API_KEY to your .env.local file. Get a FREE key at https://aistudio.google.com/app/apikey');
   }
 
   try {
-    const response = await openai.chat.completions.create({
-      model: VISION_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a solar panel inspection expert. Analyze panel condition, identify issues, and provide recommendations. Always respond in valid JSON format.',
-        },
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: 'Analyze this solar panel image. Check for dirt, damage, shading, or other issues. Respond in JSON: {"condition": "excellent|good|fair|poor", "issues": ["issue1", "issue2"], "recommendations": ["rec1", "rec2"], "estimatedEfficiency": 0-100}',
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/jpeg;base64,${imageBase64}`,
-              },
-            },
-          ],
-        },
-      ],
-      temperature: 0.5,
-      max_tokens: 800,
-      response_format: { type: 'json_object' },
-    });
+    const model = gemini.getGenerativeModel({ model: VISION_MODEL });
 
-    const content = response.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('No response from OpenAI Vision');
+    // Convert base64 to format Gemini expects
+    const imagePart = {
+      inlineData: {
+        data: imageBase64,
+        mimeType: 'image/jpeg',
+      },
+    };
+
+    const prompt = `You are a solar panel inspection expert. Analyze this solar panel image for condition, issues, and provide recommendations.
+
+Check for:
+- Dirt, dust, or debris accumulation
+- Physical damage (cracks, chips, scratches)
+- Shading from trees, buildings, or other objects
+- Discoloration or hot spots
+- Overall condition and cleanliness
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "condition": "excellent|good|fair|poor",
+  "issues": ["issue1", "issue2"],
+  "recommendations": ["recommendation1", "recommendation2"],
+  "estimatedEfficiency": <0-100>
+}`;
+
+    const result = await model.generateContent([prompt, imagePart]);
+    const response = await result.response;
+    const text = response.text();
+
+    // Extract JSON from response (Gemini might add extra text)
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('No JSON found in response');
     }
 
-    return JSON.parse(content);
+    const parsed = JSON.parse(jsonMatch[0]);
+    return parsed;
   } catch (error: any) {
-    console.error('OpenAI Vision Error:', error);
+    console.error('Gemini Vision Error:', error);
     
     // Provide more helpful error messages
-    if (error?.status === 401) {
-      throw new Error('OpenAI API key is invalid. Please check your API key at https://platform.openai.com');
+    if (error?.message?.includes('API_KEY_INVALID') || error?.status === 401) {
+      throw new Error('Gemini API key is invalid. Please check your API key at https://aistudio.google.com/app/apikey');
     }
-    if (error?.status === 402 || error?.code === 'insufficient_quota') {
-      throw new Error('OpenAI account has insufficient balance. Please add credits at https://platform.openai.com');
-    }
-    if (error?.code === 'invalid_request_error') {
-      throw new Error(`OpenAI API error: ${error.message || 'Invalid request'}`);
+    if (error?.message?.includes('quota') || error?.status === 429) {
+      throw new Error('Gemini API quota exceeded. The free tier has limits. Please try again later or check your quota at https://aistudio.google.com');
     }
     
     throw new Error(`Failed to analyze solar panel image: ${error?.message || 'Unknown error'}`);
